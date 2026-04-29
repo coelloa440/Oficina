@@ -225,9 +225,21 @@ async def update_banco(banco_id: str, body: BankIn, user: dict = Depends(require
     return doc
 
 @api.delete("/bancos/{banco_id}")
-async def delete_banco(banco_id: str, user: dict = Depends(require_role("admin"))):
-    await db.bancos.delete_one({"id": banco_id})
-    return {"ok": True}
+async def delete_banco(banco_id: str, force: bool = False, user: dict = Depends(require_role("admin"))):
+    cheques_count = await db.cheques.count_documents({"banco_id": banco_id})
+    flujo_count = await db.flujo.count_documents({"banco_id": banco_id})
+    if (cheques_count > 0 or flujo_count > 0) and not force:
+        raise HTTPException(
+            status_code=409,
+            detail=f"El banco tiene {cheques_count} cheque(s) y {flujo_count} movimiento(s) vinculados. Usa ?force=true para eliminar en cascada.",
+        )
+    if force:
+        await db.cheques.delete_many({"banco_id": banco_id})
+        await db.flujo.delete_many({"banco_id": banco_id})
+    res = await db.bancos.delete_one({"id": banco_id})
+    if res.deleted_count == 0:
+        raise HTTPException(404, "Banco no encontrado")
+    return {"ok": True, "cheques_eliminados": cheques_count if force else 0, "flujo_eliminados": flujo_count if force else 0}
 
 # -----------------------------
 # CLIENTES
@@ -751,6 +763,69 @@ async def preview_weekly_report(user: dict = Depends(get_current_user)):
     r = await build_weekly_report_html()
     return r["stats"]
 
+# Schedule config (día/hora del reporte semanal) -----------------
+DAY_NAMES = {0: "lun", 1: "mar", 2: "mié", 3: "jue", 4: "vie", 5: "sáb", 6: "dom"}
+DAY_NAMES_FULL = {0: "Lunes", 1: "Martes", 2: "Miércoles", 3: "Jueves", 4: "Viernes", 5: "Sábado", 6: "Domingo"}
+CRON_DAYS = {0: "mon", 1: "tue", 2: "wed", 3: "thu", 4: "fri", 5: "sat", 6: "sun"}
+
+class ScheduleConfig(BaseModel):
+    day_of_week: int  # 0=Lun ... 6=Dom
+    hour: int  # 0-23
+    minute: int = 0
+
+async def _get_schedule_config() -> dict:
+    """Lee config desde MongoDB (o default viernes 18:00)."""
+    cfg = await db.settings.find_one({"key": "weekly_report"}, {"_id": 0})
+    if not cfg:
+        return {"day_of_week": 4, "hour": 18, "minute": 0}
+    return {"day_of_week": cfg.get("day_of_week", 4), "hour": cfg.get("hour", 18), "minute": cfg.get("minute", 0)}
+
+def _reschedule_weekly_report(cfg: dict):
+    if scheduler is None:
+        return
+    cron = CronTrigger(
+        day_of_week=CRON_DAYS[cfg["day_of_week"]],
+        hour=cfg["hour"],
+        minute=cfg["minute"],
+        timezone=TZ_EC,
+    )
+    scheduler.reschedule_job("reporte_semanal", trigger=cron)
+
+@api.get("/reportes/semanal/config")
+async def get_schedule_config(user: dict = Depends(get_current_user)):
+    cfg = await _get_schedule_config()
+    job = scheduler.get_job("reporte_semanal") if scheduler else None
+    next_run = job.next_run_time.isoformat() if job and job.next_run_time else None
+    return {
+        **cfg,
+        "day_label": DAY_NAMES_FULL[cfg["day_of_week"]],
+        "next_run": next_run,
+        "timezone": "America/Guayaquil",
+    }
+
+@api.put("/reportes/semanal/config")
+async def update_schedule_config(body: ScheduleConfig, user: dict = Depends(require_role("admin"))):
+    if not (0 <= body.day_of_week <= 6):
+        raise HTTPException(400, "day_of_week debe ser 0-6")
+    if not (0 <= body.hour <= 23):
+        raise HTTPException(400, "hour debe ser 0-23")
+    if not (0 <= body.minute <= 59):
+        raise HTTPException(400, "minute debe ser 0-59")
+    new_cfg = {"day_of_week": body.day_of_week, "hour": body.hour, "minute": body.minute}
+    await db.settings.update_one(
+        {"key": "weekly_report"},
+        {"$set": {**new_cfg, "key": "weekly_report", "updated_at": iso(now_utc())}},
+        upsert=True,
+    )
+    _reschedule_weekly_report(new_cfg)
+    job = scheduler.get_job("reporte_semanal")
+    return {
+        **new_cfg,
+        "day_label": DAY_NAMES_FULL[body.day_of_week],
+        "next_run": job.next_run_time.isoformat() if job and job.next_run_time else None,
+        "timezone": "America/Guayaquil",
+    }
+
 # -----------------------------
 # EXPORT EXCEL
 # -----------------------------
@@ -857,19 +932,25 @@ async def on_startup():
     await seed_users()
     await seed_demo()
 
-    # Scheduler: viernes 18:00 hora Ecuador (America/Guayaquil)
+    # Scheduler: lee config persistida (default viernes 18:00 hora Ecuador)
     global scheduler
+    cfg = await _get_schedule_config()
     scheduler = AsyncIOScheduler(timezone=TZ_EC)
     scheduler.add_job(
         send_weekly_report,
-        CronTrigger(day_of_week="fri", hour=18, minute=0, timezone=TZ_EC),
+        CronTrigger(
+            day_of_week=CRON_DAYS[cfg["day_of_week"]],
+            hour=cfg["hour"],
+            minute=cfg["minute"],
+            timezone=TZ_EC,
+        ),
         id="reporte_semanal",
         replace_existing=True,
         misfire_grace_time=3600,
     )
     scheduler.start()
     next_run = scheduler.get_job("reporte_semanal").next_run_time
-    logger.info(f"Reporte semanal programado · próxima ejecución: {next_run}")
+    logger.info(f"Reporte semanal · {DAY_NAMES_FULL[cfg['day_of_week']]} {cfg['hour']:02d}:{cfg['minute']:02d} EC · próxima: {next_run}")
     # Escribir credenciales de prueba
     try:
         os.makedirs("/app/memory", exist_ok=True)

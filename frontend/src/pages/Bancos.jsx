@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "../components/ui/dialog";
-import { Plus, Download, Pencil, Landmark } from "lucide-react";
+import { Plus, Download, Pencil, Landmark, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const emptyForm = { nombre: "", saldo_efectivo: "", sobregiro_asignado: "", sobregiro_utilizado: "", color: "#0f766e" };
@@ -47,6 +47,25 @@ export default function Bancos() {
       color: b.color || "#0f766e",
     });
     setEditId(b.id); setOpen(true);
+  };
+
+  const del = async (b, force = false) => {
+    try {
+      const url = force ? `/bancos/${b.id}?force=true` : `/bancos/${b.id}`;
+      const res = await api.delete(url);
+      toast.success(`Banco eliminado${res.data.cheques_eliminados ? ` · ${res.data.cheques_eliminados} cheques + ${res.data.flujo_eliminados} movimientos en cascada` : ""}`);
+      load();
+    } catch (e) {
+      const status = e?.response?.status;
+      if (status === 409) {
+        const msg = e.response.data.detail;
+        if (window.confirm(`${msg}\n\n¿Eliminar TODO en cascada (banco + cheques + movimientos)?`)) {
+          await del(b, true);
+        }
+      } else {
+        toast.error(fmtApiError(e));
+      }
+    }
   };
 
   const totales = {
@@ -125,7 +144,12 @@ export default function Bancos() {
                   </div>
                 </div>
                 {writable && (
-                  <button onClick={() => edit(b)} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded"><Pencil className="w-4 h-4" /></button>
+                  <div className="flex gap-1">
+                    <button onClick={() => edit(b)} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded" title="Editar"><Pencil className="w-4 h-4" /></button>
+                    {user?.role === "admin" && (
+                      <button onClick={() => { if (window.confirm(`¿Eliminar ${b.nombre}?`)) del(b); }} data-testid={`delete-banco-${b.id}`} className="p-1.5 text-red-500 hover:bg-red-50 rounded" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+                    )}
+                  </div>
                 )}
               </div>
 

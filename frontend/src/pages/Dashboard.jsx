@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, money } from "../lib/api";
+import ScheduleWidget from "../components/ScheduleWidget";
 import {
   LineChart,
   Line,
@@ -151,25 +152,28 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-md p-5">
-          <h3 className="font-display text-lg font-semibold text-slate-900 mb-4">Alertas recientes</h3>
-          <div className="space-y-2.5">
-            {alertas.length === 0 && <p className="text-sm text-slate-500">Sin alertas activas.</p>}
-            {alertas.map((a) => (
-              <div
-                key={a.id}
-                className={`border-l-4 p-3 rounded-r-md text-sm ${
-                  a.priority === "high"
-                    ? "bg-red-50 border-red-500 text-red-900"
-                    : a.priority === "warning"
-                    ? "bg-amber-50 border-amber-500 text-amber-900"
-                    : "bg-blue-50 border-blue-500 text-blue-900"
-                }`}
-              >
-                <div className="font-medium">{a.titulo}</div>
-                <div className="text-xs opacity-80 mt-0.5">{a.detalle}</div>
-              </div>
-            ))}
+        <div className="space-y-4">
+          <ScheduleWidget />
+          <div className="bg-white border border-slate-200 rounded-md p-5">
+            <h3 className="font-display text-lg font-semibold text-slate-900 mb-4">Alertas recientes</h3>
+            <div className="space-y-2.5">
+              {alertas.length === 0 && <p className="text-sm text-slate-500">Sin alertas activas.</p>}
+              {alertas.map((a) => (
+                <div
+                  key={a.id}
+                  className={`border-l-4 p-3 rounded-r-md text-sm ${
+                    a.priority === "high"
+                      ? "bg-red-50 border-red-500 text-red-900"
+                      : a.priority === "warning"
+                      ? "bg-amber-50 border-amber-500 text-amber-900"
+                      : "bg-blue-50 border-blue-500 text-blue-900"
+                  }`}
+                >
+                  <div className="font-medium">{a.titulo}</div>
+                  <div className="text-xs opacity-80 mt-0.5">{a.detalle}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
