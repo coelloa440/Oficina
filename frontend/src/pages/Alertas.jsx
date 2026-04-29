@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api, fmtDate, fmtApiError } from "../lib/api";
 import { useAuth, canWrite } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
-import { Mail, AlertTriangle, AlertCircle, Info } from "lucide-react";
+import { Mail, AlertTriangle, AlertCircle, Info, FileBarChart } from "lucide-react";
 import { toast } from "sonner";
 
 const iconByPriority = { high: AlertCircle, warning: AlertTriangle, info: Info };
@@ -18,6 +18,7 @@ export default function Alertas() {
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState("all");
   const [sending, setSending] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -43,17 +44,36 @@ export default function Alertas() {
     finally { setSending(false); }
   };
 
+  const sendWeeklyReport = async () => {
+    setSendingReport(true);
+    try {
+      const { data } = await api.post("/reportes/semanal/enviar");
+      if (data.sent) {
+        toast.success(`Reporte ejecutivo enviado a ${data.delivered} destinatario(s)`);
+      } else {
+        toast.info(data.reason || "Reporte preparado pero no enviado (revisa logs).");
+      }
+    } catch (e) { toast.error(fmtApiError(e)); }
+    finally { setSendingReport(false); }
+  };
+
   return (
     <div className="space-y-6" data-testid="alertas-page">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="font-display text-3xl font-semibold text-slate-900 tracking-tight">Centro de Alertas</h1>
           <p className="text-sm text-slate-500 mt-1">{items.length} alertas activas · Priorizadas por impacto financiero</p>
+          <p className="text-xs text-slate-400 mt-1">📅 Reporte ejecutivo automático: <span className="font-medium text-slate-600">cada viernes 18:00 (hora Ecuador)</span></p>
         </div>
         {writable && (
-          <Button onClick={sendEmail} disabled={sending} className="bg-slate-900 hover:bg-slate-800" data-testid="send-email-btn">
-            <Mail className="w-4 h-4 mr-1.5" /> {sending ? "Enviando…" : "Enviar resumen email"}
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={sendWeeklyReport} disabled={sendingReport} variant="outline" data-testid="send-weekly-report-btn">
+              <FileBarChart className="w-4 h-4 mr-1.5" /> {sendingReport ? "Enviando…" : "Reporte ejecutivo"}
+            </Button>
+            <Button onClick={sendEmail} disabled={sending} className="bg-slate-900 hover:bg-slate-800" data-testid="send-email-btn">
+              <Mail className="w-4 h-4 mr-1.5" /> {sending ? "Enviando…" : "Enviar resumen"}
+            </Button>
+          </div>
         )}
       </div>
 
