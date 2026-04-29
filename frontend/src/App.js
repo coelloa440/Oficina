@@ -1,52 +1,63 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import "./App.css";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Login from "./pages/Login";
+import Layout from "./components/Layout";
+import Dashboard from "./pages/Dashboard";
+import Cheques from "./pages/Cheques";
+import Cartera from "./pages/Cartera";
+import Retenciones from "./pages/Retenciones";
+import Bancos from "./pages/Bancos";
+import Flujo from "./pages/Flujo";
+import Alertas from "./pages/Alertas";
+import { Toaster } from "sonner";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
+const Protected = ({ children }) => {
+  const { user } = useAuth();
+  if (user === undefined) {
+    return (
+      <div className="h-screen flex items-center justify-center text-slate-500">
+        Cargando…
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
 };
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/"
+        element={
+          <Protected>
+            <Layout />
+          </Protected>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="cheques" element={<Cheques />} />
+        <Route path="cartera" element={<Cartera />} />
+        <Route path="retenciones" element={<Retenciones />} />
+        <Route path="bancos" element={<Bancos />} />
+        <Route path="flujo" element={<Flujo />} />
+        <Route path="alertas" element={<Alertas />} />
+      </Route>
+    </Routes>
+  );
+}
 
 function App() {
   return (
     <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <Toaster richColors position="top-right" />
+        </BrowserRouter>
+      </AuthProvider>
     </div>
   );
 }
