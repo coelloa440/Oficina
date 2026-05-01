@@ -44,3 +44,15 @@ export const downloadExcel = async (modulo) => {
   a.remove();
   window.URL.revokeObjectURL(url);
 };
+
+export const downloadPDF = async (modulo) => {
+  const res = await api.get(`/export/pdf/${modulo}`, { responseType: "blob" });
+  const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${modulo}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.URL.revokeObjectURL(url);
+};

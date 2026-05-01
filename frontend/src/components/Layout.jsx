@@ -8,6 +8,7 @@ import {
   Landmark,
   CalendarRange,
   BellRing,
+  FileBarChart,
   LogOut,
   ShieldCheck,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const nav = [
   { to: "/bancos", label: "Bancos", icon: Landmark, tid: "nav-bancos" },
   { to: "/flujo", label: "Flujo Semanal", icon: CalendarRange, tid: "nav-flujo" },
   { to: "/alertas", label: "Alertas", icon: BellRing, tid: "nav-alertas" },
+  { to: "/reportes", label: "Reportes", icon: FileBarChart, tid: "nav-reportes" },
 ];
 
 const roleBadge = {

@@ -10,6 +10,7 @@ import Retenciones from "./pages/Retenciones";
 import Bancos from "./pages/Bancos";
 import Flujo from "./pages/Flujo";
 import Alertas from "./pages/Alertas";
+import Reportes from "./pages/Reportes";
 import { Toaster } from "sonner";
 
 const Protected = ({ children }) => {
@@ -44,6 +45,7 @@ function AppRoutes() {
         <Route path="bancos" element={<Bancos />} />
         <Route path="flujo" element={<Flujo />} />
         <Route path="alertas" element={<Alertas />} />
+        <Route path="reportes" element={<Reportes />} />
       </Route>
     </Routes>
   );
