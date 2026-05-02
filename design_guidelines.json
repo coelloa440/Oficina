@@ -1,0 +1,124 @@
+{
+  "theme": "light",
+  "archetype": "Archetype 4 (Swiss & High-Contrast) - Modified for Corporate Finance",
+  "emotional_tone": "Professional, serious, reliable, precise, bank-quality, authoritative",
+  "typography": {
+    "primary_font": "Cabinet Grotesk",
+    "primary_font_fallback": "sans-serif",
+    "secondary_font": "IBM Plex Sans",
+    "secondary_font_fallback": "sans-serif",
+    "font_setup_instructions": "Import Cabinet Grotesk (from Fontshare or local assets) for all headings to establish authority. Import IBM Plex Sans (from Google Fonts) for body text, tables, and especially numerical data to ensure tabular figure clarity. DO NOT USE INTER.",
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-bold tracking-tight text-slate-900",
+      "h2": "text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900",
+      "h3": "text-xl sm:text-2xl font-medium tracking-tight text-slate-900",
+      "h4": "text-lg font-medium tracking-tight text-slate-900",
+      "body": "text-sm text-slate-600 leading-relaxed font-sans",
+      "data_numbers": "text-sm font-sans tabular-nums font-medium text-slate-900",
+      "overline": "text-xs font-bold uppercase tracking-[0.2em] text-slate-500"
+    }
+  },
+  "colors": {
+    "background": {
+      "app": "bg-slate-50",
+      "card": "bg-white",
+      "sidebar": "bg-slate-900"
+    },
+    "text": {
+      "primary": "text-slate-900",
+      "secondary": "text-slate-600",
+      "muted": "text-slate-400",
+      "on_dark": "text-white"
+    },
+    "brand": {
+      "primary": "bg-slate-900",
+      "primary_hover": "hover:bg-slate-800 hover:text-white",
+      "secondary": "bg-white",
+      "accent": "bg-blue-600"
+    },
+    "status": {
+      "cobrado_verde": "bg-emerald-100 text-emerald-800 border-emerald-200",
+      "pendiente_amarillo": "bg-amber-100 text-amber-800 border-amber-300",
+      "anulado_gris": "bg-slate-100 text-slate-600 border-slate-200"
+    },
+    "borders": {
+      "default": "border-slate-200",
+      "dark": "border-slate-800"
+    }
+  },
+  "layout_and_spacing": {
+    "strategy": "Control Room Grid",
+    "container_padding": "p-6 lg:p-8",
+    "gap_system": "gap-4 md:gap-6",
+    "card_structure": "border border-slate-200 bg-white rounded-md shadow-sm overflow-hidden",
+    "radius": "rounded-md",
+    "dashboard_grid": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6",
+    "sidebar_width": "w-64",
+    "alignment": "Left-align all data tables and numeric labels. Right-align monetary values in tables for decimal alignment. Center-align empty states."
+  },
+  "components": {
+    "navigation": {
+      "type": "Fixed Sidebar",
+      "style": "bg-slate-900 text-slate-300 border-r border-slate-800",
+      "active_state": "bg-slate-800 text-white border-l-4 border-blue-500 font-medium",
+      "hover_state": "hover:bg-slate-800 hover:text-white transition-colors"
+    },
+    "kpi_cards": {
+      "style": "bg-white border border-slate-200 p-5 rounded-md shadow-sm flex flex-col gap-2",
+      "value_style": "text-3xl font-bold font-primary tracking-tight text-slate-900 tabular-nums",
+      "label_style": "text-sm font-medium text-slate-500 uppercase tracking-wider"
+    },
+    "data_tables": {
+      "header_style": "bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider py-3 px-4",
+      "row_style": "border-b border-slate-100 hover:bg-slate-50/50 transition-colors",
+      "cell_style": "py-3 px-4 text-sm text-slate-700 whitespace-nowrap",
+      "density": "high"
+    },
+    "buttons": {
+      "primary": "bg-slate-900 text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-slate-800 transition-colors shadow-sm",
+      "secondary": "bg-white text-slate-700 border border-slate-300 rounded-md px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm",
+      "export": "bg-white text-blue-600 border border-blue-200 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-blue-50 transition-colors flex items-center gap-2"
+    },
+    "badges": {
+      "base": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border"
+    },
+    "alerts": {
+      "container": "border-l-4 rounded-r-md p-4 shadow-sm",
+      "high_priority": "bg-red-50 border-red-500 text-red-800",
+      "warning": "bg-amber-50 border-amber-500 text-amber-800",
+      "info": "bg-blue-50 border-blue-500 text-blue-800"
+    }
+  },
+  "modules_instructions": {
+    "1_cheques_emitidos": "Implement table using Shadcn. Include 'Estado' column using the specified Verde/Amarillo/Gris badges. Allow filtering by state.",
+    "2_cartera_clientes": "Table must include real-time client-side calculation: 'Total = Subtotal - Anticipos - Retenciones'. Align numeric columns to the right.",
+    "3_estado_retenciones": "Data table showing retention statuses clearly. Use IBM Plex Sans for optimal number readability.",
+    "4_bancos": "Display as a grid of 'Bank Cards'. Each card shows: Bank Name/Logo, Saldo, Sobregiro Asignado, and a calculated field 'Disponible' (Saldo + Asignado - Utilizado). Use progress bars or visual indicators for 'Sobregiro utilizado'.",
+    "5_flujo_semanal": "Use a timeline or calendar grid component. Must clearly show IN (ingresos) vs OUT (egresos) per day for the current week.",
+    "6_dashboard_gerencial": "Top section: 5 KPI cards (Saldo Total Bancos, Cheques Pendientes, Cartera Pendiente, Retenciones, Disponible Real). Middle section: Recharts Line/Area chart for Flujo Semanal and a Bar chart for Cartera por Cliente. Bottom: Recent alerts.",
+    "7_alertas": "Implement a dedicated Notification Center (Popover in header) or a Sidebar widget. Differentiate priority (High over-draft vs pending check).",
+    "8_reportes": "Add export buttons (Excel/PDF) in the header of each table module using Phosphor Icons or Lucide.",
+    "9_seguridad": "Mock role-based views. If Admin/Financiero -> Full edit/view. If Consulta -> Read-only mode, hide action buttons."
+  },
+  "motion_and_interaction": {
+    "hover_effects": "Subtle and crisp. Buttons lift slightly (-translate-y-[1px]) with increased shadow. Table rows use a very subtle bg color shift.",
+    "transitions": "Use 'transition-all duration-200 ease-in-out' universally for color and transform changes.",
+    "page_load": "Staggered fade-in for dashboard cards and table rows using Framer Motion (e.g., initial opacity 0, y 10, animate to opacity 1, y 0, stagger 0.05s)."
+  },
+  "icons_and_assets": {
+    "icon_library": "@phosphor-icons/react",
+    "icon_style": "Duotone or Regular weight. Duotone for sidebar navigation items to add premium feel. Regular for table actions.",
+    "images": [
+      {
+        "category": "login_background",
+        "description": "High-end modern bank glass facade, symbolizing corporate trust and financial stability.",
+        "url": "https://images.unsplash.com/photo-1761057999122-32c962e37408?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODh8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBiYW5rJTIwYnVpbGRpbmclMjBnbGFzcyUyMGZhY2FkZXxlbnwwfHx8fDE3Nzc0OTQzNDN8MA&ixlib=rb-4.1.0&q=85",
+        "usage": "Use as a full-bleed background on the right side of a split-screen login page with a subtle black/50 overlay."
+      }
+    ]
+  },
+  "accessibility_and_testing": {
+    "contrast": "All text must pass WCAG AA against its background. The gray badge text must be dark enough (`text-slate-700` or `text-slate-800`).",
+    "testing_attributes": "MANDATORY: Add `data-testid` to all interactive elements. e.g., `data-testid=\"nav-bancos\"`, `data-testid=\"export-excel-btn\"`, `data-testid=\"cheque-status-badge\"`."
+  }
+}
