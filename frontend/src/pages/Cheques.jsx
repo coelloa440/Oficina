@@ -1,12 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { api, money, fmtDate, fmtApiError, downloadExcel } from "../lib/api";
+import { Plus, Download, Trash2, Pencil, Landmark, MoreVertical } from "lucide-react";
 import { useAuth, canWrite } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Plus, Download, Trash2, Pencil, Landmark } from "lucide-react";
 import { toast } from "sonner";
 
 const estadoStyles = {
@@ -109,7 +109,7 @@ export default function Cheques() {
             Total pendiente de cobro: <span className="font-semibold text-slate-800 tabular-nums">{money(totalPendiente)}</span> · Agrupados por banco
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
           <Button variant="outline" onClick={() => downloadExcel("cheques")} data-testid="export-cheques-btn">
             <Download className="w-4 h-4 mr-1.5" /> Excel
           </Button>
@@ -159,7 +159,7 @@ export default function Cheques() {
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-2">
         {["all", "pendiente", "cobrado", "anulado"].map((s) => (
           <button
             key={s}
@@ -187,79 +187,164 @@ export default function Cheques() {
         {grouped.map(({ banco, list }) => {
           const totalGrupo = list.reduce((a, c) => a + c.valor, 0);
           const pendGrupo = list.filter(c => c.estado === "pendiente").reduce((a, c) => a + c.valor, 0);
-          return (
-            <div key={banco.id} className="bg-white border border-slate-200 rounded-md overflow-hidden" data-testid={`group-${banco.id}`}>
-              <div
-                className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50"
-                style={{ borderLeft: `4px solid ${banco.color || "#0f172a"}` }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-8 h-8 rounded-md flex items-center justify-center"
-                    style={{ background: `${banco.color || "#0f172a"}18`, color: banco.color || "#0f172a" }}
-                  >
-                    <Landmark className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="font-display text-lg font-semibold text-slate-900 leading-none">{banco.nombre}</div>
-                    <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mt-1">
-                      {list.length} cheque{list.length !== 1 ? "s" : ""}
+          return (        
+            <div key={banco.id}>
+               {/* Vista móvil */}
+                  <div className="md:hidden space-y-3">
+                    <div
+                      className="rounded-xl bg-slate-900 text-white p-4"
+                      style={{ borderLeft: `5px solid ${banco.color || "#0f172a"}` }}
+                    >
+                      <div className="font-display text-lg font-semibold">{banco.nombre}</div>
+                      <div className="text-xs text-slate-300 mt-1">
+                        {list.length} cheque{list.length !== 1 ? "s" : ""} · Pendiente: {money(pendGrupo)}
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div className="flex gap-6 text-right">
-                  <div>
-                    <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Pendiente</div>
-                    <div className="text-sm font-semibold tabular-nums text-amber-700 mt-0.5">{money(pendGrupo)}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Total</div>
-                    <div className="text-sm font-semibold tabular-nums text-slate-900 mt-0.5">{money(totalGrupo)}</div>
-                  </div>
-                </div>
-              </div>
-
-              <table className="w-full text-sm">
-                <thead className="bg-white border-b border-slate-100">
-                  <tr>
-                    {["N°", "Beneficiario", "Emisión", "Cobro", "Días", "Valor", "Estado", ""].map((h) => (
-                      <th key={h} className="text-left py-2.5 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-500">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
                   {list.map((c) => (
-                    <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3 px-4 font-medium text-slate-900">{c.numero}</td>
-                      <td className="py-3 px-4">{c.beneficiario}</td>
-                      <td className="py-3 px-4 text-slate-600">{fmtDate(c.fecha_emision)}</td>
-                      <td className="py-3 px-4 text-slate-600">{fmtDate(c.fecha_cobro)}</td>
-                      <td className={`py-3 px-4 tabular-nums ${c.dias_restantes < 0 ? "text-red-600" : c.dias_restantes <= 3 ? "text-amber-700 font-medium" : "text-slate-600"}`}>
-                        {c.estado === "pendiente" ? (c.dias_restantes ?? "—") + "d" : "—"}
-                      </td>
-                      <td className="py-3 px-4 text-right tabular-nums font-medium">{money(c.valor)}</td>
-                      <td className="py-3 px-4">
-                        <span
-                          data-testid="cheque-status-badge"
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${estadoStyles[c.estado]}`}
-                        >
-                          {c.estado}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
+                    <div key={c.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-900">#{c.numero}</span>
+                            <span className={`text-[11px] px-2 py-0.5 rounded-full border ${estadoStyles[c.estado]}`}>
+                              {c.estado}
+                            </span>
+                          </div>
+
+                          <p className="mt-2 text-sm text-slate-700 font-medium">
+                            {c.beneficiario}
+                          </p>
+                        </div>
+
                         {writable && (
-                          <div className="flex gap-1 justify-end">
-                            <button onClick={() => edit(c)} data-testid={`edit-cheque-${c.id}`} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded"><Pencil className="w-3.5 h-3.5" /></button>
-                            {user?.role === "admin" && (
-                              <button onClick={() => del(c.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
-                            )}
+                          <div className="relative group">
+                            <button className="p-2 rounded-full hover:bg-slate-100 text-slate-500">
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+
+                            <div className="hidden group-focus-within:block group-hover:block absolute right-0 top-9 w-36 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                              <button
+                                onClick={() => edit(c)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                              >
+                                <Pencil className="w-4 h-4" />
+                                Editar
+                              </button>
+
+                              {user?.role === "admin" && (
+                                <button
+                                  onClick={() => del(c.id)}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Eliminar
+                                </button>
+                              )}
+                            </div>
                           </div>
                         )}
-                      </td>
-                    </tr>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-xs text-slate-400 uppercase font-semibold">Emisión</p>
+                          <p className="text-slate-700">{fmtDate(c.fecha_emision)}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs text-slate-400 uppercase font-semibold">Cobro</p>
+                          <p className="text-slate-700">{fmtDate(c.fecha_cobro)}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between">
+                        <span className="text-xs text-slate-400 uppercase font-semibold">
+                          Valor
+                        </span>
+                        <span className="text-lg font-bold text-slate-900 tabular-nums">
+                          {money(c.valor)}
+                        </span>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+
+                {/* Vista escritorio */}
+                <div className="hidden md:block overflow-x-auto">
+                  <div className="bg-white border border-slate-200 rounded-md overflow-hidden">
+                        <div
+                          className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50"
+                          style={{ borderLeft: `4px solid ${banco.color || "#0f172a"}` }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-8 h-8 rounded-md flex items-center justify-center"
+                              style={{ background: `${banco.color || "#0f172a"}18`, color: banco.color || "#0f172a" }}
+                            >
+                              <Landmark className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="font-display text-lg font-semibold text-slate-900 leading-none">{banco.nombre}</div>
+                              <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mt-1">
+                                {list.length} cheque{list.length !== 1 ? "s" : ""}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-6 text-right">
+                            <div>
+                              <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Pendiente</div>
+                              <div className="text-sm font-semibold tabular-nums text-amber-700 mt-0.5">{money(pendGrupo)}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Total</div>
+                              <div className="text-sm font-semibold tabular-nums text-slate-900 mt-0.5">{money(totalGrupo)}</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <table className="w-full text-sm">
+                          <thead className="bg-white border-b border-slate-100">
+                            <tr>
+                              {["N°", "Beneficiario", "Emisión", "Cobro", "Días", "Valor", "Estado", ""].map((h) => (
+                                <th key={h} className="text-left py-2.5 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-500">{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {list.map((c) => (
+                              <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
+                                <td className="py-3 px-4 font-medium text-slate-900">{c.numero}</td>
+                                <td className="py-3 px-4">{c.beneficiario}</td>
+                                <td className="py-3 px-4 text-slate-600">{fmtDate(c.fecha_emision)}</td>
+                                <td className="py-3 px-4 text-slate-600">{fmtDate(c.fecha_cobro)}</td>
+                                <td className={`py-3 px-4 tabular-nums ${c.dias_restantes < 0 ? "text-red-600" : c.dias_restantes <= 3 ? "text-amber-700 font-medium" : "text-slate-600"}`}>
+                                  {c.estado === "pendiente" ? (c.dias_restantes ?? "—") + "d" : "—"}
+                                </td>
+                                <td className="py-3 px-4 text-right tabular-nums font-medium">{money(c.valor)}</td>
+                                <td className="py-3 px-4">
+                                  <span
+                                    data-testid="cheque-status-badge"
+                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${estadoStyles[c.estado]}`}
+                                  >
+                                    {c.estado}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4">
+                                  {writable && (
+                                    <div className="flex gap-1 justify-end">
+                                      <button onClick={() => edit(c)} data-testid={`edit-cheque-${c.id}`} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded"><Pencil className="w-3.5 h-3.5" /></button>
+                                      {user?.role === "admin" && (
+                                        <button onClick={() => del(c.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                  </div>
+                </div>
             </div>
           );
         })}
