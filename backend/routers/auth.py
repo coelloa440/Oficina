@@ -26,7 +26,15 @@ async def register(body: UserCreate, response: Response):
     }
     await db.users.insert_one(user)
     token = create_access_token(user["id"], email, body.role)
-    response.set_cookie("access_token", token, httponly=True, samesite="lax", max_age=43200, path="/")
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=43200,
+        path="/"
+    )
     return {"id": user["id"], "email": email, "name": body.name, "role": body.role}
 
 
@@ -38,13 +46,26 @@ async def login(body: LoginIn, response: Response):
     if not user or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
     token = create_access_token(user["id"], email, user["role"])
-    response.set_cookie("access_token", token, httponly=True, samesite="lax", max_age=43200, path="/")
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=43200,
+        path="/"
+    )
     return {"id": user["id"], "email": email, "name": user["name"], "role": user["role"]}
 
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie("access_token", path="/")
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        secure=True,
+        samesite="none"
+    )
     return {"ok": True}
 
 
