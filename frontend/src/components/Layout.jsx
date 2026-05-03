@@ -1,6 +1,8 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
@@ -37,6 +39,30 @@ export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const titles = {
+      "/": "Dashboard",
+      "/bancos": "Bancos",
+      "/cheques": "Cheques",
+      "/cartera": "Cartera de Clientes",
+      "/retenciones": "Retenciones",
+      "/flujo": "Flujo Semanal",
+      "/alertas": "Centro de Alertas",
+      "/reportes": "Reportes",
+    };
+
+    const page = titles[location.pathname] || "Sistema";
+    document.title = `${page} | Finteck`;
+  }, [location.pathname]);
+
+  const icons = {
+    "/bancos": Landmark,
+    "/cheques": FileText,
+    "/cartera": Users,
+    "/flujo": CalendarRange,
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -144,6 +170,25 @@ export default function Layout() {
                   </NavLink>
                 ))}
               </nav>
+              <div className="p-4 border-t border-slate-800 mt-auto">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 rounded-full bg-slate-700 text-white flex items-center justify-center font-medium text-sm">
+                    {user?.name?.[0]?.toUpperCase() || "U"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-white truncate">{user?.name}</div>
+                    <div className="text-xs text-slate-400 truncate">{user?.email}</div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-slate-800 text-white hover:bg-slate-700"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Cerrar sesión
+                </button>
+              </div>
             </aside>
           </div>
         )}

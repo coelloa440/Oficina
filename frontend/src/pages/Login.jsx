@@ -9,8 +9,8 @@ import { ShieldCheck, TrendingUp, Wallet2, BarChart3 } from "lucide-react";
 export default function Login() {
   const { login, user } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("admin@finanzas.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -76,6 +76,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 data-testid="login-password-input"
+                placeholder="••••••••"
                 className="mt-1.5"
                 required
               />
