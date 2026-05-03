@@ -54,9 +54,6 @@ export default function Layout() {
             </div>
             <div>
               <div className="font-display text-lg font-semibold text-white leading-none">
-                Tesorería
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-1">
                 Control Financiero
               </div>
             </div>
@@ -163,7 +160,7 @@ export default function Layout() {
                 <Menu className="w-5 h-5" />
               </button>
 
-              <span className="font-semibold text-slate-700">Tesorería</span>
+              <span className="font-semibold text-slate-700"></span>
             </div>
           <Outlet />
         </div>

@@ -82,14 +82,15 @@ export default function Bancos() {
           <h1 className="font-display text-3xl font-semibold text-slate-900 tracking-tight">Módulo Bancario</h1>
           <p className="text-sm text-slate-500 mt-1">Disponible = Saldo + Sobregiro asignado − Sobregiro utilizado</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => downloadExcel("bancos")} data-testid="export-bancos-btn"><Download className="w-4 h-4 mr-1.5" /> Excel</Button>
           {writable && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => { setForm(emptyForm); setEditId(null); }} className="bg-slate-900 hover:bg-slate-800" data-testid="new-banco-btn">
+                <Button className="bg-slate-900 hover:bg-slate-800 w-full sm:w-auto">
                   <Plus className="w-4 h-4 mr-1.5" /> Nuevo banco
                 </Button>
+
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>{editId ? "Editar banco" : "Nuevo banco"}</DialogTitle></DialogHeader>

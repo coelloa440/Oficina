@@ -25,6 +25,7 @@ export default function Flujo() {
   const writable = canWrite(user?.role);
   const [anchor, setAnchor] = useState(startOfWeek(new Date()));
   const [items, setItems] = useState([]);
+  const [cheques, setCheques] = useState([]);
   const [bancos, setBancos] = useState([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -45,8 +46,25 @@ export default function Flujo() {
   const hasta = toISO(weekDays[6]);
 
   const load = async () => {
-    const { data } = await api.get(`/flujo?desde=${desde}&hasta=${hasta}`);
-    setItems(data);
+    const [{ data: flujoData }, { data: chequesData }] = await Promise.all([
+      api.get(`/flujo?desde=${desde}&hasta=${hasta}`),
+      api.get(`/cheques?estado=pendiente`),
+    ]);
+
+    setItems(flujoData);
+    setCheques(
+      chequesData
+        .filter(c => c.fecha_cobro >= desde && c.fecha_cobro <= hasta)
+        .map(c => ({
+          id: `cheque-${c.id}`,
+          fecha: c.fecha_cobro,
+          tipo: "egreso",
+          descripcion: `Cheque #${c.numero} · ${c.beneficiario}`,
+          monto: c.valor,
+          banco_id: c.banco_id,
+          origen: "cheque",
+        }))
+    );
   };
   useEffect(() => { load(); }, [desde, hasta]);
   useEffect(() => {
@@ -54,11 +72,12 @@ export default function Flujo() {
   }, []);
 
   const bancoMap = Object.fromEntries(bancos.map(b => [b.id, b]));
-  const byDay = Object.fromEntries(weekDays.map(d => [toISO(d), items.filter(x => x.fecha === toISO(d))]));
-
-  const totalIngresos = items.filter(x => x.tipo === "ingreso").reduce((a, b) => a + b.monto, 0);
-  const totalEgresos = items.filter(x => x.tipo === "egreso").reduce((a, b) => a + b.monto, 0);
-
+  const flujoCompleto = [...items, ...cheques];
+  const byDay = Object.fromEntries(
+    weekDays.map(d => [toISO(d), flujoCompleto.filter(x => x.fecha === toISO(d))])
+  );
+  const totalIngresos = flujoCompleto.filter(x => x.tipo === "ingreso").reduce((a, b) => a + b.monto, 0);
+  const totalEgresos = flujoCompleto.filter(x => x.tipo === "egreso").reduce((a, b) => a + b.monto, 0);
   const addEntry = async () => {
     try {
       await api.post("/flujo", { ...form, monto: parseFloat(form.monto) });
@@ -82,14 +101,14 @@ export default function Flujo() {
 
   return (
     <div className="space-y-6" data-testid="flujo-page">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-semibold text-slate-900 tracking-tight">Flujo Semanal</h1>
           <p className="text-sm text-slate-500 mt-1">
             {weekDays[0].toLocaleDateString("es-EC", { day: "2-digit", month: "short" })} — {weekDays[6].toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "numeric" })}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => shift(-1)} data-testid="prev-week-btn"><ChevronLeft className="w-4 h-4" /></Button>
           <Button variant="outline" onClick={() => setAnchor(startOfWeek(new Date()))}>Hoy</Button>
           <Button variant="outline" onClick={() => shift(1)} data-testid="next-week-btn"><ChevronRight className="w-4 h-4" /></Button>
@@ -97,7 +116,7 @@ export default function Flujo() {
           {writable && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-slate-900 hover:bg-slate-800" data-testid="new-flujo-btn"><Plus className="w-4 h-4 mr-1.5" /> Movimiento</Button>
+                <Button className="bg-slate-900 hover:bg-slate-800 w-full sm:w-auto" data-testid="new-flujo-btn"><Plus className="w-4 h-4 mr-1.5" /> Movimiento</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Nuevo movimiento</DialogTitle></DialogHeader>
@@ -131,14 +150,14 @@ export default function Flujo() {
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white border border-slate-200 p-4 rounded-md">
           <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Ingresos semana</div>
-          <div className="text-2xl font-display font-semibold tabular-nums text-emerald-700 mt-1">{money(totalIngresos)}</div>
+          <div className="text-xl sm:text-2xl font-display font-semibold tabular-nums text-emerald-700 mt-1">{money(totalIngresos)}</div>
         </div>
         <div className="bg-white border border-slate-200 p-4 rounded-md">
           <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Egresos semana</div>
-          <div className="text-2xl font-display font-semibold tabular-nums text-rose-700 mt-1">{money(totalEgresos)}</div>
+          <div className="text-xl sm:text-2xl font-display font-semibold tabular-nums text-rose-700 mt-1">{money(totalEgresos)}</div>
         </div>
         <div className="bg-white border border-slate-200 p-4 rounded-md">
           <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Neto semana</div>
@@ -180,8 +199,10 @@ export default function Flujo() {
                         {e.tipo === "ingreso" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                         {e.descripcion}
                       </div>
-                      {writable && (
-                        <button onClick={() => delEntry(e.id)} className="opacity-40 hover:opacity-100"><Trash2 className="w-3 h-3" /></button>
+                      {writable && e.origen !== "cheque" && (
+                        <button onClick={() => delEntry(e.id)} className="opacity-40 hover:opacity-100">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
                       )}
                     </div>
                     <div className="mt-1 flex items-center justify-between">

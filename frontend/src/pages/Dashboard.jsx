@@ -72,7 +72,7 @@ export default function Dashboard() {
             Panel Gerencial
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Situación financiera consolidada · {new Date().toLocaleDateString("es-EC", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+            {new Date().toLocaleDateString("es-EC", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
           </p>
         </div>
       </div>

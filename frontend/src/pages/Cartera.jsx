@@ -6,7 +6,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Plus, Download, Trash2, Pencil, UserPlus } from "lucide-react";
+import { Plus, Download, Trash2, Pencil, UserPlus, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 
 const estadoStyles = {
@@ -103,14 +103,14 @@ export default function Cartera() {
 
   return (
     <div className="space-y-6" data-testid="cartera-page">
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-slate-900 tracking-tight">Cartera de Clientes</h1>
+         <h1 className="font-display text-3xl sm:text-4xl font-semibold text-slate-900 tracking-tight leading-tight">Cartera de Clientes</h1>
           <p className="text-sm text-slate-500 mt-1">
             Total pendiente: <span className="font-semibold text-slate-800 tabular-nums">{money(totalBySubtract)}</span> · Fórmula Total = Subtotal − Anticipos − Retenciones
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => downloadExcel("cartera")} data-testid="export-cartera-btn"><Download className="w-4 h-4 mr-1.5" /> Excel</Button>
           {writable && (
             <>
@@ -195,44 +195,130 @@ export default function Cartera() {
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-md overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              {["Cliente","Documento","Fecha","Subtotal","Anticipos","Retención","Total","Estado",""].map(h => (
-                <th key={h} className="text-left py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-500">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {facturas.length === 0 && <tr><td colSpan="9" className="py-10 text-center text-slate-400">Sin facturas</td></tr>}
-            {facturas.map(f => (
-              <tr key={f.id} className="border-b border-slate-100 hover:bg-slate-50/60">
-                <td className="py-3 px-4 font-medium text-slate-900">{cliMap[f.cliente_id] || "—"}</td>
-                <td className="py-3 px-4 text-slate-600">{f.numero_documento}</td>
-                <td className="py-3 px-4 text-slate-600">{fmtDate(f.fecha_emision)}</td>
-                <td className="py-3 px-4 text-right tabular-nums">{money(f.subtotal)}</td>
-                <td className="py-3 px-4 text-right tabular-nums text-slate-500">−{money(f.anticipos)}</td>
-                <td className="py-3 px-4 text-right tabular-nums text-slate-500">−{money(f.retencion)}</td>
-                <td className="py-3 px-4 text-right tabular-nums font-semibold">{money(f.total)}</td>
-                <td className="py-3 px-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${estadoStyles[f.estado]}`}>{f.estado}</span>
-                </td>
-                <td className="py-3 px-4">
-                  {writable && (
-                    <div className="flex gap-1 justify-end">
-                      <button onClick={() => edit(f)} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded"><Pencil className="w-3.5 h-3.5" /></button>
+      {/* Vista móvil */}
+        <div className="md:hidden space-y-3">
+          {facturas.length === 0 && (
+            <div className="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+              Sin facturas
+            </div>
+          )}
+
+          {facturas.map((f) => (
+            <div key={f.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900">{f.numero_documento}</span>
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full border ${estadoStyles[f.estado]}`}>
+                      {f.estado}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-sm text-slate-700 font-medium">
+                    {cliMap[f.cliente_id] || "—"}
+                  </p>
+                </div>
+
+                {writable && (
+                  <div className="relative group">
+                    <button className="p-2 rounded-full hover:bg-slate-100 text-slate-500">
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+
+                    <div className="hidden group-focus-within:block group-hover:block absolute right-0 top-9 w-36 bg-white border border-slate-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                      <button
+                        onClick={() => edit(f)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                      >
+                        <Pencil className="w-4 h-4" />
+                        Editar
+                      </button>
+
                       {user?.role === "admin" && (
-                        <button onClick={() => del(f.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <button
+                          onClick={() => del(f.id)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Eliminar
+                        </button>
                       )}
                     </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-xs text-slate-400 uppercase font-semibold">Fecha</p>
+                  <p className="text-slate-700">{fmtDate(f.fecha_emision)}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-400 uppercase font-semibold">Subtotal</p>
+                  <p className="text-slate-700">{money(f.subtotal)}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-400 uppercase font-semibold">Anticipos</p>
+                  <p className="text-slate-700">−{money(f.anticipos)}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-400 uppercase font-semibold">Retención</p>
+                  <p className="text-slate-700">−{money(f.retencion)}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
+                <span className="text-xs text-slate-400 uppercase font-semibold">Total</span>
+                <span className="text-lg font-bold text-slate-900 tabular-nums">
+                  {money(f.total)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Vista escritorio */}
+        <div className="hidden md:block bg-white border border-slate-200 rounded-md overflow-x-auto">
+          <table className="w-full text-sm min-w-[900px]">
+            <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      {["Cliente","Documento","Fecha","Subtotal","Anticipos","Retención","Total","Estado",""].map(h => (
+                        <th key={h} className="text-left py-3 px-4 text-[11px] font-bold uppercase tracking-wider text-slate-500">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {facturas.length === 0 && <tr><td colSpan="9" className="py-10 text-center text-slate-400">Sin facturas</td></tr>}
+                    {facturas.map(f => (
+                      <tr key={f.id} className="border-b border-slate-100 hover:bg-slate-50/60">
+                        <td className="py-3 px-4 font-medium text-slate-900">{cliMap[f.cliente_id] || "—"}</td>
+                        <td className="py-3 px-4 text-slate-600">{f.numero_documento}</td>
+                        <td className="py-3 px-4 text-slate-600">{fmtDate(f.fecha_emision)}</td>
+                        <td className="py-3 px-4 text-right tabular-nums">{money(f.subtotal)}</td>
+                        <td className="py-3 px-4 text-right tabular-nums text-slate-500">−{money(f.anticipos)}</td>
+                        <td className="py-3 px-4 text-right tabular-nums text-slate-500">−{money(f.retencion)}</td>
+                        <td className="py-3 px-4 text-right tabular-nums font-semibold">{money(f.total)}</td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${estadoStyles[f.estado]}`}>{f.estado}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          {writable && (
+                            <div className="flex gap-1 justify-end">
+                              <button onClick={() => edit(f)} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded"><Pencil className="w-3.5 h-3.5" /></button>
+                              {user?.role === "admin" && (
+                                <button onClick={() => del(f.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5" /></button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+          </table>
+        </div>
     </div>
   );
 }
