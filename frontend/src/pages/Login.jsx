@@ -36,9 +36,6 @@ export default function Login() {
           </div>
           <div>
             <div className="font-display text-lg font-semibold text-slate-900 leading-none">
-              Tesorería
-            </div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-1">
               Control Financiero
             </div>
           </div>
@@ -47,7 +44,7 @@ export default function Login() {
         <div>
           <h1 className="font-display text-4xl sm:text-5xl font-semibold text-slate-900 tracking-tight leading-tight">
             Una sola vista <br />
-            para toda tu <em className="text-emerald-600 not-italic">tesorería</em>.
+            para toda tu <em className="text-emerald-600 not-italic">empresa</em>.
           </h1>
           <p className="mt-4 text-slate-600 max-w-sm">
             Cheques, cartera, bancos, retenciones y flujo semanal — en tiempo real y sin Excel.
@@ -61,7 +58,7 @@ export default function Login() {
               <Input
                 id="email"
                 type="email"
-                value={email}
+                value=""
                 onChange={(e) => setEmail(e.target.value)}
                 data-testid="login-email-input"
                 className="mt-1.5"
@@ -76,7 +73,7 @@ export default function Login() {
               <Input
                 id="password"
                 type="password"
-                value={password}
+                value=""
                 onChange={(e) => setPassword(e.target.value)}
                 data-testid="login-password-input"
                 className="mt-1.5"
@@ -98,12 +95,6 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-600">
-            <p className="font-medium text-slate-700 mb-1.5">Cuentas demo:</p>
-            <p>admin@finanzas.com / admin123 (administrador)</p>
-            <p>financiero@finanzas.com / financiero123</p>
-            <p>consulta@finanzas.com / consulta123 (solo lectura)</p>
-          </div>
         </div>
 
         <div className="text-xs text-slate-400">
@@ -133,7 +124,7 @@ export default function Login() {
             ))}
           </div>
           <h2 className="font-display text-3xl font-semibold leading-tight max-w-lg">
-            "Reemplazamos 7 hojas de Excel por un panel único."
+            "Reemplazamos Excel por un panel único."
           </h2>
         </div>
       </div>
