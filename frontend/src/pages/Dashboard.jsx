@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, money } from "../lib/api";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import ScheduleWidget from "../components/ScheduleWidget";
 import {
   LineChart,
@@ -51,14 +52,40 @@ const Kpi = ({ label, value, icon: Icon, tone = "slate", sub, tid }) => (
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [alertas, setAlertas] = useState([]);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    (async () => {
-      const [d, a] = await Promise.all([api.get("/dashboard"), api.get("/alertas")]);
-      setData(d.data);
-      setAlertas(a.data.slice(0, 5));
-    })();
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
+
+  const load = async () => {
+    const [d, a] = await Promise.all([
+      api.get("/dashboard"),
+      api.get("/alertas"),
+    ]);
+
+    setData(d.data);
+    setAlertas(a.data.slice(0, 5));
+  };
+
+  const { lastUpdated } = useAutoRefresh(load, 30000, []);
+
+  const seconds = lastUpdated
+    ? Math.floor((now - lastUpdated.getTime()) / 1000)
+    : 0;
+
+  const label =
+    seconds < 60
+      ? `${seconds}s`
+      : `${Math.floor(seconds / 60)}m`;
+
+  const lastUpdatedText = lastUpdated
+    ? `Actualizado hace ${label}`
+    : "Cargando...";
 
   if (!data) return <div className="text-slate-500">Cargando panel…</div>;
 
@@ -74,7 +101,50 @@ export default function Dashboard() {
           <p className="text-sm text-slate-500 mt-1">
             {new Date().toLocaleDateString("es-EC", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
           </p>
+          <p className="text-xs text-slate-400 mt-1">
+            {lastUpdatedText}
+          </p>
         </div>
+      </div>
+
+      {/* Bancos summary row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {data.bancos.map((b) => {
+          const pctSobregiro =
+            b.sobregiro_asignado > 0
+              ? Math.min(100, (b.sobregiro_utilizado / b.sobregiro_asignado) * 100)
+              : 0;
+          return (
+            <div key={b.id} className="bg-white border border-slate-200 rounded-md p-5 lift" data-testid={`banco-card-${b.id}`}>
+              <div className="flex items-center justify-between">
+                <div className="font-medium text-slate-900">{b.nombre}</div>
+                <div className="w-2 h-2 rounded-full" style={{ background: b.color }} />
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wider">Saldo</div>
+                  <div className="font-semibold tabular-nums text-slate-900">{money(b.saldo_efectivo)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wider">Disponible</div>
+                  <div className="font-semibold tabular-nums text-emerald-700">{money(b.disponible)}</div>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                  <span>Sobregiro {pctSobregiro.toFixed(0)}%</span>
+                  <span className="tabular-nums">{money(b.sobregiro_utilizado)} / {money(b.sobregiro_asignado)}</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className={`h-full ${pctSobregiro > 80 ? "bg-red-500" : pctSobregiro > 50 ? "bg-amber-500" : "bg-emerald-500"}`}
+                    style={{ width: `${pctSobregiro}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* KPIs */}
@@ -123,7 +193,7 @@ export default function Dashboard() {
                   innerRadius={55}
                   paddingAngle={2}
                 >
-                  {data.cheques_por_estado.map((entry, i) => (
+                  {(data.cheques_por_estado || []).map((entry, i) => (
                     <Cell key={i} fill={COLORS[entry.estado]} />
                   ))}
                 </Pie>
@@ -132,6 +202,25 @@ export default function Dashboard() {
               </PieChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      {/* Cheques próximos */}
+      <div className="bg-white border border-slate-200 rounded-md p-5">
+        <h3 className="font-display text-lg font-semibold text-slate-900 mb-4">
+          Cheques próximos a cobrarse
+        </h3>
+
+        <div style={{ width: "100%", height: 260 }}>
+          <ResponsiveContainer>
+            <BarChart data={data.cheques_proximos || []}>
+              <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="dia" stroke="#64748b" fontSize={12} />
+              <YAxis stroke="#64748b" fontSize={12} />
+              <Tooltip formatter={(v) => money(v)} />
+              <Bar dataKey="monto" fill="#6366f1" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -176,46 +265,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Bancos summary row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {data.bancos.map((b) => {
-          const pctSobregiro =
-            b.sobregiro_asignado > 0
-              ? Math.min(100, (b.sobregiro_utilizado / b.sobregiro_asignado) * 100)
-              : 0;
-          return (
-            <div key={b.id} className="bg-white border border-slate-200 rounded-md p-5 lift" data-testid={`banco-card-${b.id}`}>
-              <div className="flex items-center justify-between">
-                <div className="font-medium text-slate-900">{b.nombre}</div>
-                <div className="w-2 h-2 rounded-full" style={{ background: b.color }} />
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-xs text-slate-500 uppercase tracking-wider">Saldo</div>
-                  <div className="font-semibold tabular-nums text-slate-900">{money(b.saldo_efectivo)}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500 uppercase tracking-wider">Disponible</div>
-                  <div className="font-semibold tabular-nums text-emerald-700">{money(b.disponible)}</div>
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                  <span>Sobregiro {pctSobregiro.toFixed(0)}%</span>
-                  <span className="tabular-nums">{money(b.sobregiro_utilizado)} / {money(b.sobregiro_asignado)}</span>
-                </div>
-                <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className={`h-full ${pctSobregiro > 80 ? "bg-red-500" : pctSobregiro > 50 ? "bg-amber-500" : "bg-emerald-500"}`}
-                    style={{ width: `${pctSobregiro}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        })}
       </div>
     </div>
   );

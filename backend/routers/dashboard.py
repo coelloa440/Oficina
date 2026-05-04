@@ -46,14 +46,51 @@ async def dashboard(user: dict = Depends(get_current_user)):
     ]
 
     # Flujo próximos 7 días
+    # Flujo próximos 7 días + cheques pendientes por fecha de cobro
     today = date.today()
-    dias  = []
+    dias = []
+    cheques_proximos = []
+
     for i in range(7):
-        d  = today + timedelta(days=i)
+        d = today + timedelta(days=i)
         ds = d.isoformat()
-        ingresos = sum(x["monto"] for x in flujo if x["fecha"] == ds and x["tipo"] == "ingreso")
-        egresos  = sum(x["monto"] for x in flujo if x["fecha"] == ds and x["tipo"] == "egreso")
-        dias.append({"fecha": ds, "dia": d.strftime("%a"), "ingresos": round(ingresos, 2), "egresos": round(egresos, 2)})
+
+        ingresos = sum(
+            x["monto"]
+            for x in flujo
+            if x["fecha"] == ds and x["tipo"] == "ingreso"
+        )
+
+        egresos_flujo = sum(
+            x["monto"]
+            for x in flujo
+            if x["fecha"] == ds and x["tipo"] == "egreso"
+        )
+
+        egresos_cheques = sum(
+            c["valor"]
+            for c in cheques_pend
+            if c.get("fecha_cobro") == ds
+        )
+
+        egresos = egresos_flujo + egresos_cheques
+
+        dias.append({
+            "fecha": ds,
+            "dia": d.strftime("%a"),
+            "ingresos": round(ingresos, 2),
+            "egresos": round(egresos, 2),
+        })
+
+        cheques_proximos.append({
+            "fecha": ds,
+            "dia": d.strftime("%d %b"),
+            "monto": round(egresos_cheques, 2),
+            "cantidad": len([
+                c for c in cheques_pend
+                if c.get("fecha_cobro") == ds
+            ]),
+        })
 
     return {
         "kpis": {
@@ -66,6 +103,7 @@ async def dashboard(user: dict = Depends(get_current_user)):
         "cheques_por_estado":  [{"estado": k, "cantidad": v} for k, v in por_estado.items()],
         "cartera_por_cliente": cartera_cliente_data,
         "flujo_7dias":         dias,
+        "cheques_proximos":    cheques_proximos,
         "bancos": [
             {**b, "disponible": round(b["saldo_efectivo"] + b["sobregiro_asignado"] - b["sobregiro_utilizado"], 2)}
             for b in bancos

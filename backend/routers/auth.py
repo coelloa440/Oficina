@@ -1,6 +1,6 @@
 """Router de autenticación: login, register, logout, me."""
 from fastapi import APIRouter, Response, Depends
-
+from utils.auditoria import log_event
 from core import (
     get_current_user, hash_password, verify_password,
     create_access_token, new_id, iso, now_utc,
@@ -35,6 +35,7 @@ async def register(body: UserCreate, response: Response):
         max_age=43200,
         path="/"
     )
+    await log_event(email, "auth", "register", "Usuario registrado")  
     return {"id": user["id"], "email": email, "name": body.name, "role": body.role}
 
 
@@ -43,9 +44,12 @@ async def login(body: LoginIn, response: Response):
     db = get_db()
     email = body.email.lower()
     user  = await db.users.find_one({"email": email})
+
     if not user or not verify_password(body.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
+
     token = create_access_token(user["id"], email, user["role"])
+
     response.set_cookie(
         key="access_token",
         value=token,
@@ -55,6 +59,14 @@ async def login(body: LoginIn, response: Response):
         max_age=43200,
         path="/"
     )
+
+    await log_event(
+        usuario=user["email"],
+        modulo="auth",
+        accion="login",
+        detalle="Inicio de sesión exitoso"
+    )
+
     return {"id": user["id"], "email": email, "name": user["name"], "role": user["role"]}
 
 

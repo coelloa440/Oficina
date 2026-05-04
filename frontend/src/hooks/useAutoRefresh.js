@@ -1,7 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function useAutoRefresh(callback, delay = 30000, deps = []) {
   const loadingRef = useRef(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -14,10 +15,14 @@ export function useAutoRefresh(callback, delay = 30000, deps = []) {
       loadingRef.current = true;
       try {
         await callback();
+        setLastUpdated(new Date()); // 👈 CLAVE
       } finally {
         loadingRef.current = false;
       }
     };
+
+    // Primera carga inmediata
+    safeRun();
 
     const interval = setInterval(safeRun, delay);
 
@@ -35,4 +40,6 @@ export function useAutoRefresh(callback, delay = 30000, deps = []) {
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, deps);
+
+  return { lastUpdated }; // 👈 RETORNAMOS
 }

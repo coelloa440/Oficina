@@ -16,7 +16,7 @@ import database
 from core import hash_password, verify_password, new_id, iso, now_utc
 from services.email import init_resend
 from services.reports import send_weekly_report
-from routers import auth, bancos, clientes, cheques, facturas, flujo, dashboard, alertas, reportes, exports
+from routers import auth, bancos, clientes, cheques, facturas, flujo, dashboard, alertas, reportes, exports, auditoria
 from routers.reportes import set_scheduler
 
 ROOT_DIR = Path(__file__).parent
@@ -34,6 +34,7 @@ app = FastAPI(title="Sistema Integral de Control Financiero y Cartera")
 PREFIX = "/api"
 app.include_router(auth.router, prefix=PREFIX)
 app.include_router(bancos.router, prefix=PREFIX)
+app.include_router(auditoria.router, prefix=PREFIX)
 app.include_router(clientes.router, prefix=PREFIX)
 app.include_router(cheques.router, prefix=PREFIX)
 app.include_router(facturas.router, prefix=PREFIX)
@@ -42,7 +43,6 @@ app.include_router(dashboard.router, prefix=PREFIX)
 app.include_router(alertas.router, prefix=PREFIX)
 app.include_router(reportes.router, prefix=PREFIX)
 app.include_router(exports.router, prefix=PREFIX)
-
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
