@@ -4,6 +4,7 @@ import { Plus, Download, Trash2, Pencil, Landmark, MoreVertical } from "lucide-r
 import { useAuth, canWrite } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { Label } from "../components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
@@ -50,7 +51,8 @@ export default function Cheques() {
   }, []);
 
   useEffect(() => { load(); }, [filter]);
-
+  useAutoRefresh(load, 30000, [filter]);
+  
   const save = async () => {
     try {
       const body = { ...form, valor: parseFloat(form.valor) };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, fmtDate, fmtApiError } from "../lib/api";
 import { useAuth, canWrite } from "../context/AuthContext";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { Button } from "../components/ui/button";
 import { Mail, AlertTriangle, AlertCircle, Info, FileBarChart } from "lucide-react";
 import { toast } from "sonner";
@@ -12,6 +13,8 @@ const colorByPriority = {
   info: "border-blue-500 bg-blue-50 text-blue-900",
 };
 
+
+
 export default function Alertas() {
   const { user } = useAuth();
   const writable = canWrite(user?.role);
@@ -19,15 +22,16 @@ export default function Alertas() {
   const [filter, setFilter] = useState("all");
   const [sending, setSending] = useState(false);
   const [sendingReport, setSendingReport] = useState(false);
+    const load = async () => {
+    const { data } = await api.get("/alertas");
+    setItems(data);
+  };
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await api.get("/alertas");
-      setItems(data);
-    })();
-  }, []);
+  useEffect(() => { load(); }, []);
+  useAutoRefresh(load, 30000, []);
 
   const filtered = items.filter(a => filter === "all" || a.priority === filter);
+
   const counts = {
     high: items.filter(i => i.priority === "high").length,
     warning: items.filter(i => i.priority === "warning").length,

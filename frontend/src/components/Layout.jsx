@@ -57,12 +57,6 @@ export default function Layout() {
     document.title = `${page} | Finteck`;
   }, [location.pathname]);
 
-  const icons = {
-    "/bancos": Landmark,
-    "/cheques": FileText,
-    "/cartera": Users,
-    "/flujo": CalendarRange,
-  };
 
   const handleLogout = async () => {
     await logout();

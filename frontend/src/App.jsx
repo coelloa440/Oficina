@@ -10,11 +10,15 @@ import Retenciones from "./pages/Retenciones";
 import Bancos from "./pages/Bancos";
 import Flujo from "./pages/Flujo";
 import Alertas from "./pages/Alertas";
+import { useEffect, useState } from "react";
+import Loader from "./components/Loader";
+import { checkBackend } from "./lib/health";
 import Reportes from "./pages/Reportes";
 import { Toaster } from "sonner";
 
 const Protected = ({ children }) => {
   const { user } = useAuth();
+
   if (user === undefined) {
     return (
       <div className="h-screen flex items-center justify-center text-slate-500">
@@ -22,7 +26,9 @@ const Protected = ({ children }) => {
       </div>
     );
   }
+
   if (!user) return <Navigate to="/login" replace />;
+
   return children;
 };
 
@@ -52,6 +58,48 @@ function AppRoutes() {
 }
 
 function App() {
+  const [ready, setReady] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [message, setMessage] = useState("Inicializando sistema...");
+
+  useEffect(() => {
+  const init = async () => {
+    setProgress(10);
+    setMessage("Inicializando sistema...");
+
+    await new Promise(r => setTimeout(r, 300));
+
+    setProgress(30);
+    setMessage("Conectando al servidor...");
+
+    const backend = await checkBackend();
+    if (!backend) {
+      setMessage("No se pudo conectar con el servidor.");
+      return;
+    }
+
+    setProgress(60);
+    setMessage("Validando sesión...");
+
+    await new Promise(r => setTimeout(r, 400));
+
+    setProgress(80);
+    setMessage("Cargando datos iniciales...");
+
+    await new Promise(r => setTimeout(r, 400));
+
+    setProgress(100);
+    setMessage("Listo 🚀");
+
+    setTimeout(() => setReady(true), 300);
+  };
+
+  init();
+}, []);
+
+  if (!ready) return <Loader message={message} progress={progress} />;
+
+
   return (
     <div className="App">
       <AuthProvider>

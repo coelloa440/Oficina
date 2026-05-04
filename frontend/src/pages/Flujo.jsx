@@ -3,6 +3,7 @@ import { api, money, fmtApiError, downloadExcel } from "../lib/api";
 import { useAuth, canWrite } from "../context/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { useAutoRefresh } from "../hooks/useAutoRefresh";
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "../components/ui/dialog";
@@ -67,6 +68,7 @@ export default function Flujo() {
     );
   };
   useEffect(() => { load(); }, [desde, hasta]);
+  useAutoRefresh(load, 30000, [desde, hasta]);
   useEffect(() => {
     (async () => { setBancos((await api.get("/bancos")).data); })();
   }, []);

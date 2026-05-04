@@ -1,33 +1,33 @@
-export default function Loader({ message = "Inicializando sistema..." }) {
+export default function Loader({ message, progress = 0 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] px-6">
-      <div className="w-full max-w-sm text-center">
-        <div className="mx-auto mb-6 relative w-24 h-24">
-          <div className="absolute inset-0 rounded-3xl bg-emerald-500/20 blur-xl animate-pulse" />
-          <div className="relative w-24 h-24 rounded-3xl bg-white border border-slate-200 shadow-lg flex items-center justify-center">
-            <img
-              src="/pwa-192x192.png"
-              alt="Finteck"
-              className="w-16 h-16 object-contain animate-[pulse_2s_ease-in-out_infinite]"
-            />
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#0f172a] px-6">
+      <div className="w-full max-w-sm text-center text-white">
+        
+        {/* Logo */}
+        <div className="mx-auto mb-6 w-24 h-24 rounded-[28px] overflow-hidden bg-white shadow-lg flex items-center justify-center">
+        <img
+            src="/pwa-192x192.png"
+            alt="Finteck"
+            className="w-full h-full object-cover"
+        />
+        </div>
+        {/* Nombre */}
+        <h1 className="text-2xl font-semibold">Finteck</h1>
+
+        {/* Estado */}
+        <p className="mt-2 text-sm text-slate-300">{message}</p>
+
+        {/* Barra REAL */}
+        <div className="mt-6 h-2 w-full bg-slate-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-emerald-400 transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
         </div>
 
-        <h1 className="font-display text-2xl font-semibold text-slate-900">
-          Finteck
-        </h1>
+        {/* Porcentaje */}
+        <p className="mt-2 text-xs text-slate-400">{progress}%</p>
 
-        <p className="mt-2 text-sm font-medium text-slate-600">
-          {message}
-        </p>
-
-        <div className="mt-6 h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-          <div className="h-full w-2/3 rounded-full bg-slate-900 animate-[loadingBar_1.6s_ease-in-out_infinite]" />
-        </div>
-
-        <p className="mt-4 text-xs text-slate-400">
-          Preparando entorno financiero seguro...
-        </p>
       </div>
     </div>
   );
